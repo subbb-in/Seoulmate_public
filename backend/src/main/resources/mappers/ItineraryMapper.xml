@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.sm.domain.itinerary.mapper.ItineraryMapper">
+
+    <!-- 여행 일정 생성 -->
+    <insert id="saveItinerary"
+            parameterType="com.ssafy.sm.domain.itinerary.dto.ItineraryRequest$Create"
+            useGeneratedKeys="true" keyProperty="itinNo">
+        INSERT INTO itinerary (itin_title, day_cnt, user_no, created_at, thumbnail)
+        VALUES (#{itinTitle}, #{dayCnt}, #{userNo}, NOW(), #{thumbnail})
+    </insert>
+
+    <!-- 목록 페이징 처리 -->
+    <!-- 일정 목록 페이징 조회 -->
+    <select id="findAllItineraryPaged"
+            parameterType="map"
+            resultType="com.ssafy.sm.domain.itinerary.dto.ItineraryResponse$GetAll">
+        SELECT itin_no, itin_title, day_cnt, thumbnail
+        FROM itinerary
+        WHERE user_no = #{userNo}
+          AND is_deleted = false
+        ORDER BY created_at DESC
+            LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <!-- 일정 전체 개수 조회 -->
+    <select id="countItinerary"
+            parameterType="Long"
+            resultType="int">
+        SELECT COUNT(*)
+        FROM itinerary
+        WHERE user_no = #{userNo}
+          AND is_deleted = false
+    </select>
+
+    <!-- 일정 기본 정보 조회 -->
+    <select id="findItineraryBasic"
+            parameterType="map"
+            resultType="com.ssafy.sm.domain.itinerary.dto.ItineraryResponse$Basic">
+        SELECT
+            i.itin_no AS itinNo,
+            i.itin_title AS itinTitle,
+            i.day_cnt AS dayCnt,
+            i.thumbnail AS thumbnail
+        FROM itinerary i
+        WHERE i.user_no = #{userNo}
+          AND i.itin_no = #{itinNo}
+          AND i.is_deleted = FALSE
+    </select>
+
+    <!-- 일정에 연계된 장소 정보 전체 호출 -->
+    <select id="findPlacesByItinerary"
+            parameterType="Long"
+            resultType="com.ssafy.sm.domain.itinerary.dto.ItineraryResponse$ItinPlaceDetail">
+        SELECT
+            ip.itin_place_no   AS itinPlaceNo,
+            ip.day_order       AS dayOrder,
+            ip.order_in_day    AS orderInDay,
+            ip.move_type       AS moveType,
+            ip.move_minutes    AS moveMinutes,
+
+            ip.place_no        AS placeNo,
+            ip.itin_no         AS itinNo,
+
+            p.content_id       AS contentId,
+            p.content_type_id  AS contentTypeId,
+            p.title            AS title,
+            p.addr1            AS addr1,
+            p.addr2            AS addr2,
+            p.description      AS description,
+            p.title_ko         AS titleKo,
+            p.addr1_ko         AS addr1Ko,
+            p.zipcode          AS zipcode,
+            p.opening          AS opening,
+            p.closing          AS closing,
+            p.rating           AS rating,
+            p.mapx             AS mapx,
+            p.mapy             AS mapy,
+            p.first_image      AS firstImage,
+            p.first_image2     AS firstImage2,
+            p.tel              AS tel,
+            p.total_minutes   AS totalMinutes
+        FROM itinerary_place ip
+                 JOIN place p ON ip.place_no = p.place_no
+        WHERE ip.itin_no = #{itinNo}
+        ORDER BY ip.day_order, ip.order_in_day
+    </select>
+
+    <!-- 일정 soft delete -->
+    <update id="deleteByUserNoAndItinNo">
+        UPDATE itinerary
+        SET is_deleted = TRUE
+        WHERE itin_no = #{itinNo}
+        AND user_no = #{userNo}
+        AND is_deleted = FALSE   <!-- 이미 삭제된 건 다시 삭제하지 않음 -->
+    </update>
+
+</mapper>

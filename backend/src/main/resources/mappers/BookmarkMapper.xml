@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.sm.domain.bookmark.mapper.BookmarkMapper">
+
+    <!-- 찜 여부 확인 -->
+    <select id="existsBookmark" resultType="int">
+        SELECT COUNT(*)
+        FROM bookmark
+        WHERE user_no = #{userNo} AND place_no = #{placeNo}
+    </select>
+
+    <!-- 찜 추가 -->
+    <insert id="addBookmark">
+        INSERT INTO bookmark (user_no, place_no, created_at)
+        VALUES (#{userNo}, #{placeNo}, NOW())
+    </insert>
+
+    <!-- 찜 취소 -->
+    <delete id="removeBookmark">
+        DELETE FROM bookmark
+        WHERE user_no = #{userNo} AND place_no = #{placeNo}
+    </delete>
+
+    <!-- 내가 찜한 장소 목록 조회 -->
+    <!-- bookmark 테이블(b)과 place 테이블(p)을 조인 -->
+    <select id="findBookmarksByUser" resultType="com.ssafy.sm.domain.bookmark.dto.BookmarkResponse">
+        SELECT
+            b.bookmark_no,
+            b.created_at,
+            p.place_no,
+            p.title,
+            p.addr1,
+            p.first_image,
+            p.rating
+        FROM bookmark b
+                 JOIN place p ON b.place_no = p.place_no
+        WHERE b.user_no = #{userNo}
+        ORDER BY b.created_at DESC
+    </select>
+
+</mapper>

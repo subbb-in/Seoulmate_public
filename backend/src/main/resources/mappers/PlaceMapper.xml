@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.sm.domain.place.mapper.PlaceMapper">
+
+    <!-- 1. 영문 데이터 저장 (메인) -->
+    <insert id="saveEnglishPlace" parameterType="com.ssafy.sm.domain.place.dto.PlaceDto$Detail"
+            useGeneratedKeys="true" keyProperty="placeNo">
+        INSERT INTO place (
+            content_id, content_type_id, title, addr1, addr2,
+            zipcode, mapx, mapy, first_image, first_image2, tel, created_at
+        ) VALUES (
+                     #{contentId}, #{contentTypeId}, #{title}, #{addr1}, #{addr2},
+                     #{zipcode}, #{mapx}, #{mapy}, #{firstImage}, #{firstImage2}, #{tel}, NOW()
+                 )
+            ON DUPLICATE KEY UPDATE
+                                 title = #{title},
+                                 addr1 = #{addr1},
+                                 addr2 = #{addr2},
+                                 first_image = #{firstImage},
+                                 tel = #{tel}
+    </insert>
+
+    <!-- 2. 한국어 데이터 업데이트 (보조) -->
+    <update id="updateKoreanInfo">
+        UPDATE place
+        SET title_ko = #{titleKo},
+            addr1_ko = #{addr1Ko}
+        WHERE content_id = #{contentId}
+    </update>
+
+    <!-- 전체 장소 조회 -->
+    <select id="findAllPlaces" resultType="com.ssafy.sm.domain.place.dto.PlaceDto$Detail">
+        SELECT * FROM place ORDER BY title
+    </select>
+
+    <!-- 장소 상세 조회 -->
+    <select id="findPlaceByNo" resultType="com.ssafy.sm.domain.place.dto.PlaceDto$Detail">
+        SELECT * FROM place WHERE place_no = #{placeNo}
+    </select>
+
+    <!-- 정확도를 위해 제목 길이순 정렬 -> 짧을수록 정확히 일치할 확률 높음 -->
+    <select id="findPlaceByTitle" resultType="com.ssafy.sm.domain.place.dto.PlaceDto$Detail">
+        SELECT * FROM place
+        WHERE title LIKE CONCAT('%', #{keyword}, '%')
+           OR title_ko LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY LENGTH(title) ASC
+            LIMIT 5
+    </select>
+</mapper>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.sm.domain.itineraryPlace.mapper.ItineraryPlaceMapper">
+
+    <!-- 1. 일정에 장소 추가 -->
+    <insert id="saveItineraryPlace"
+            parameterType="com.ssafy.sm.domain.itineraryPlace.dto.ItineraryPlaceRequest$Create"
+            useGeneratedKeys="true" keyProperty="itinPlaceNo">
+        INSERT INTO itinerary_place (itin_no, place_no, day_order, order_in_day, move_type, move_minutes)
+        VALUES (#{itinNo}, #{placeNo}, #{dayOrder}, #{orderInDay}, #{moveType}, #{moveMinutes})
+    </insert>
+
+    <!-- 2. 일정 속 장소 삭제 -->
+    <delete id="deleteByItineraryAndPlace">
+        DELETE
+        FROM itinerary_place
+        WHERE itin_place_no = #{itinPlaceNo}
+          AND itin_no = #{itinNo}
+    </delete>
+
+    <!-- 3. 일정 속 장소 순서 변경 (Update) -->
+    <update id="updateDetailOrder">
+        UPDATE itinerary_place
+        SET day_order = #{dayOrder},
+            order_in_day = #{orderInDay}
+        WHERE itin_place_no = #{itinPlaceNo}
+          AND itin_no = #{itinNo}
+    </update>
+
+    <!-- 4. 특정 일정의 모든 장소 조회 (Drag & Drop 후 갱신용) -->
+    <!-- Place 테이블과 조인하여 상세 정보를 조회 -->
+    <select id="findAllByItineraryNo" resultType="com.ssafy.sm.domain.itinerary.dto.ItineraryResponse$ItinPlaceDetail">
+        SELECT
+            ip.itin_place_no AS itinPlaceNo,
+            ip.itin_no AS itinNo,
+            ip.day_order AS dayOrder,
+            ip.order_in_day AS orderInDay,
+            ip.move_type AS moveType,
+            ip.move_minutes AS moveMinutes,
+            p.place_no AS placeNo,
+            p.content_id AS contentId,
+            p.content_type_id AS contentTypeId,
+            p.title AS title,
+            p.addr1 AS addr1,
+            p.addr2 AS addr2,
+            p.mapx AS mapx,
+            p.mapy AS mapy,
+            p.first_image AS firstImage,
+            p.first_image2 AS firstImage2,
+            p.rating AS rating
+        FROM itinerary_place ip
+                 JOIN place p ON ip.place_no = p.place_no
+        WHERE ip.itin_no = #{itinNo}
+        ORDER BY ip.day_order ASC, ip.order_in_day ASC
+    </select>
+
+</mapper>
